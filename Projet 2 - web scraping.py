@@ -90,7 +90,7 @@ if page.ok:
         os.chdir(cdir + "\Images")
         img_data = requests.get(bookData[-1]).content
         with open(
-            ("Cover page - " + bookData[7] + " " + bookData[1] + ".jpg"), "wb"
+            ("Cover page - " + bookData[7] + "." + bookData[1] + ".jpg"), "wb"
         ) as handler:
             handler.write(img_data)
         os.chdir(cdir)
