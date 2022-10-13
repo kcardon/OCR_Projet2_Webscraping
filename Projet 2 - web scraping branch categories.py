@@ -5,6 +5,13 @@ import pandas as pd
 import os
 import re
 
+# Préparation du dossier de récupération des données
+os.mkdir("Data")
+os.chdir(os.getcwd() + "\Data")
+dataDir = os.getcwd()
+
+### EXTRACT
+
 # Lien de départ : identification des liens vers les différentes catégories du site
 urlStart = "http://books.toscrape.com/"
 page = requests.get(urlStart)
@@ -16,25 +23,15 @@ if page.ok:
 
     # Itération sur chaque catégorie
     for catLink in catLinks:
-
         currentCat = catLink.split("/")[-2]
-
-        # Création d'un Data Frame
-        col = [
-            "product_page_url",
-            "universal_ product_code (upc)",
-            "title",
-            "price_including_tax",
-            "price_excluding_tax",
-            "number_available",
-            "product_description",
-            "category",
-            "review_rating",
-            "image_url",
-        ]
-        DF = pd.DataFrame(columns=col)
-
         catPage = requests.get(catLink)
+
+        # Création du dossier spécifique à la catégorie et d'un dossier Images
+        os.chdir(dataDir)
+        os.mkdir(currentCat)
+        os.chdir(dataDir + "\\" + currentCat)
+        os.mkdir("Images")
+        os.chdir(dataDir + "\\" + currentCat + "\Images")
 
         # première page de la catégorie à explorer
         if catPage.ok:
@@ -69,7 +66,21 @@ if page.ok:
                         urlStart + "catalogue/" + book.get("href").replace("../", "")
                     )
 
-        ratingStr = ["Zero", "One", "Two", "Three", "Four", "Five"]
+        ### TRANSFORM
+        # Création d'un Data Frame
+        col = [
+            "product_page_url",
+            "universal_ product_code (upc)",
+            "title",
+            "price_including_tax",
+            "price_excluding_tax",
+            "number_available",
+            "product_description",
+            "category",
+            "review_rating",
+            "image_url",
+        ]
+        DF = pd.DataFrame(columns=col)
 
         # Chaque page "livre" va être examinée afin d'en tirer les informations demandées.
         for bookLink in books:
@@ -92,26 +103,24 @@ if page.ok:
                 # Categorie
                 bookHtml.find_all("a")[3].text,
                 # Score
-                ratingStr.index(str(bookHtml.find_all("p")[2].attrs["class"][1])),
+                ["Zero", "One", "Two", "Three", "Four", "Five"].index(
+                    str(bookHtml.find_all("p")[2].attrs["class"][1])
+                ),
                 # Lien de l'image
                 urlStart + bookHtml.find("img").attrs["src"],
             ]
 
+            ###LOAD
             # La ligne spécifique au livre est ajoutée au data frame
             DF.loc[len(DF)] = bookData
 
             # Téléchargement de l'image
-            if "Images" not in os.listdir():
-                os.mkdir("Images")
-                cdir = os.getcwd()
-            os.chdir(cdir + "\Images")
             img_data = requests.get(bookData[-1]).content
             with open(
                 ("Cover page - " + bookData[7] + "." + bookData[1] + ".jpg"), "wb"
             ) as handler:
                 handler.write(img_data)
-            os.chdir(cdir)
 
         # Enregistrement des données dans le data frame
-
+        os.chdir(dataDir + "\\" + currentCat)
         DF.to_csv("ScrapedBooks - Category " + currentCat + ".csv", sep=";")
