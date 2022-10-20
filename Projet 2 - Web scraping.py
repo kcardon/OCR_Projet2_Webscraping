@@ -1,3 +1,7 @@
+"""Projet 2 Openclassrooms : 
+version bêta d'une application dédiée au web-scraping d'un site web de vente de livres en ligne, books.toscrape.com.
+"""
+
 # Import des packages
 import requests
 from bs4 import BeautifulSoup
@@ -12,7 +16,7 @@ data_dir = os.getcwd()
 
 ### EXTRACT
 
-
+# Définition d'une fonction permettant de traduire une url en contenu html.
 def get_html_content(url):
     page = requests.get(url)
     if page.ok:
@@ -22,6 +26,7 @@ def get_html_content(url):
 # Lien de départ : identification des liens vers les différentes catégories du site
 url_start = "http://books.toscrape.com/"
 html = get_html_content(url_start)
+
 # Récupération des liens URL des catégories à parcourir
 html_cat = html.find("div", class_="side_categories")
 cat_links = [url_start + link.get("href") for link in html_cat.find_all("a")][1:]
